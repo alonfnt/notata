@@ -3,6 +3,10 @@
 [![tests](https://github.com/alonfnt/notata/actions/workflows/pytest.yml/badge.svg)](https://github.com/alonfnt/notata/actions/workflows/pytest.yml)
 [![PyPI](https://img.shields.io/pypi/v/notata.svg)](https://pypi.org/project/notata/)
 
+<p align="center">
+    <img style="width: 500px; height: auto;" alt="notata" src="https://github.com/user-attachments/assets/54a59260-1dbf-4ff5-9fb0-046dd6e4f5f8" />
+</p>
+
 `notata` is a minimal library for **structured filesystem logging of scientific runs**.
 
 One `Logbook` -> one run directory: parameters, arrays, plots, artifacts, metadata, timestamped log. Explicit. Reproducible. Grep‑friendly.
