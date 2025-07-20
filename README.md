@@ -4,12 +4,12 @@
 [![PyPI](https://img.shields.io/pypi/v/notata.svg)](https://pypi.org/project/notata/)
 
 <p align="center">
-    <img style="width: 500px; height: auto;" alt="notata" src="https://github.com/user-attachments/assets/54a59260-1dbf-4ff5-9fb0-046dd6e4f5f8" />
+    <img style="width: 500px; height: auto;"  src="https://github.com/user-attachments/assets/0e73e7b8-bdee-4fcf-9872-fdf8b3d52156" />
 </p>
 
 `notata` is a minimal library for **structured filesystem logging of scientific runs**.
 
-One `Logbook` -> one run directory: parameters, arrays, plots, artifacts, metadata, timestamped log. Explicit. Reproducible. Grep‑friendly.
+Each `Logbook` creates a run directory with parameters, arrays, plots, artifacts, metadata, and a timestamped log. **Explicit. Reproducible. Grep-friendly**.
 
 ## Installation
 ```bash
@@ -113,7 +113,7 @@ where the files follow:
 | `params.yaml` / `params.json`| Parameter snapshot (latest saved form)                                                                 |
 | `data/*.npz`                 | Array archives; single array → key `data`; multi-array save → keys = argument names                    |
 | `data/**/`                   | Additional numeric outputs (via `category="data/..."`)                                                 |
-| `plots/*.png|pdf|svg`        | Saved figures (`save_plot`)                                                                            |
+| `plots/*.(png\|pdf\|svg)`    | Saved figures (`save_plot`)                                                                            |
 | `artifacts/*.txt`            | Text artifacts (`save_text`)                                                                           |
 | `artifacts/*.json`           | JSON artifacts (`save_json`)                                                                           |
 | `artifacts/*.pkl`            | Pickled objects (`save_pickle`)                                                                        |
