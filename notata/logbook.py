@@ -14,13 +14,14 @@ from typing import Any, Dict, Optional, Union, Iterable, List
 class Logbook:
     """Structured container for a single scientific run or experiment.
 
-    A `Logbook` creates an isolated run directory and provides atomic, explicit
+    A ``Logbook`` creates an isolated run directory and provides atomic, explicit
     methods to persist parameters, arrays, plots, checkpoints, arbitrary
     artifacts, and lifecycle metadata. It also records a chronological plain
     text log and supports context manager semantics that automatically mark
     completion or failure.
 
-    Run directory layout (illustrative):
+    Run directory layout (illustrative)::
+
         log_<run_id>/
             log.txt
             metadata.json
@@ -35,18 +36,21 @@ class Logbook:
         required if multiple threads or processes access the same instance.
 
     Args:
-        run_id: Identifier for the run; incorporated into the directory name
-            as `log_<run_id>`.
-        base_dir: Parent directory under which the run directory is created.
-        params: Optional parameter dictionary to persist immediately.
-        overwrite: If False and the target directory exists, raises
-            `FileExistsError`.
-        preallocate: If True, creates an `artifacts` subdirectory eagerly.
+        run_id (str | int): Identifier for the run; incorporated into the
+            directory name as ``log_<run_id>``.
+        base_dir (str | Path, optional): Parent directory under which the run
+            directory is created.
+        params (dict, optional): Optional parameter dictionary to persist
+            immediately.
+        overwrite (bool, optional): If False and the target directory exists,
+            raises ``FileExistsError``.
+        preallocate (bool, optional): If True, creates an ``artifacts``
+            subdirectory eagerly.
 
     Attributes:
-        run_id: String identifier of the run.
-        path: Path object pointing to the run directory.
-        log_path: Path to the chronological log file.
+        run_id (str): String identifier of the run.
+        path (Path): Path object pointing to the run directory.
+        log_path (Path): Path to the chronological log file.
     """
 
     def __init__(
