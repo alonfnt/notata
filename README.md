@@ -1,6 +1,7 @@
 # notata
 
 [![tests](https://github.com/alonfnt/notata/actions/workflows/pytest.yml/badge.svg)](https://github.com/alonfnt/notata/actions/workflows/pytest.yml)
+[![Docs](https://readthedocs.org/projects/notata/badge/?version=latest)](https://notata.readthedocs.io/en/latest/)
 [![PyPI](https://img.shields.io/pypi/v/notata.svg)](https://pypi.org/project/notata/)
 
 <p align="center">
