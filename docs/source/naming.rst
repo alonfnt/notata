@@ -28,8 +28,8 @@ Examples:
 - ``baseline_v2``
 - ``test_fail_case1``
 
-Array Files (`.npz`)
---------------------
+Array Files (`.npy` or `.npz`)
+------------------------------
 
 Saved to ``data/``
 
@@ -37,13 +37,21 @@ Use:
 
 .. code-block:: text
 
-    <quantity>[ _<step> | _<variant> ].npz
+    <quantity>[ _<step> | _<variant> ].npy
+    <bundle_name>.npz  (for multiple arrays)
 
 Examples:
 
-- ``trajectory.npz``
-- ``T_step500.npz``
+- ``trajectory.npy``
+- ``T_step500.npy``
 - ``field_baseline.npz``
+
+Saved using:
+
+.. code-block:: python
+
+    log.array("vec", np.arange(100))
+    log.arrays("batch", a=..., b=...)
 
 Plots (`.png`, `.pdf`, `.svg`)
 ------------------------------
@@ -56,22 +64,22 @@ Use:
 
     <figure_name>[ _<variant> ].<ext>
 
-Organize by category if needed:
-
-.. code-block:: python
-
-    log.save_plot("loss_curve_train", category="plots/diagnostics")
-
 Examples:
 
 - ``phase_space.png``
 - ``loss_curve_train.svg``
 - ``summary_overview.pdf``
 
+Saved using:
+
+.. code-block:: python
+
+    log.plot("loss_curve_train", fig=fig, formats=("png", "pdf"))
+
 Artifacts (`.json`, `.txt`, `.pkl`, etc.)
 -----------------------------------------
 
-Saved to ``artifacts/`` or nested categories
+Saved to ``artifacts/``
 
 **Text**
 
@@ -79,9 +87,17 @@ Saved to ``artifacts/`` or nested categories
 
     <topic>[ _<context> ].txt
 
-    notes_run.txt
-    crash_trace.txt
-    cmd_args.txt
+Examples:
+
+- ``notes_run.txt``
+- ``crash_trace.txt``
+- ``cmd_args.txt``
+
+Saved using:
+
+.. code-block:: python
+
+    log.text("cmd_args", "python script.py")
 
 **JSON**
 
@@ -89,8 +105,16 @@ Saved to ``artifacts/`` or nested categories
 
     <topic>[ _<stage> ].json
 
-    metrics_final.json
-    results_validation.json
+Examples:
+
+- ``metrics_final.json``
+- ``results_validation.json``
+
+Saved using:
+
+.. code-block:: python
+
+    log.json("metrics_final", {"acc": 0.94})
 
 **Pickle**
 
@@ -98,8 +122,16 @@ Saved to ``artifacts/`` or nested categories
 
     <object_type>_<name>.pkl
 
-    model_v1.pkl
-    cache_solver.pkl
+Examples:
+
+- ``model_v1.pkl``
+- ``cache_solver.pkl``
+
+Saved using:
+
+.. code-block:: python
+
+    log.pickle("model_v1", model)
 
 **Bytes / Binary**
 
@@ -107,7 +139,26 @@ Saved to ``artifacts/`` or nested categories
 
     <type>_<timestamp>.bin
 
-    weights_20250721T1530.bin
+Examples:
+
+- ``weights_20250721T1530.bin``
+
+Saved using:
+
+.. code-block:: python
+
+    log.bytes("weights_20250721T1530.bin", b"\x00\x01")
+
+Manual Path Customization
+-------------------------
+
+If you want full control over where to place an artifact (e.g. a nested folder), use the bracket accessor:
+
+.. code-block:: python
+
+    log["artifacts/eval/metrics.json"].write_text("...")
+
+This guarantees parent directory creation and is the preferred replacement for the deprecated `category=...` argument.
 
 Tips and Recommendations
 -------------------------
@@ -115,7 +166,7 @@ Tips and Recommendations
 - Use lowercase, no spaces
 - Prefer descriptive keys over generic ones (`energy_final` > `out`)
 - Avoid redundant extensions (e.g. `result.json.json`)
-- Use `category=...` instead of encoding directory structure in names
+- Use `log["relative/path"]` for manual control of directory layout
 - For time-stamped names, prefer ISO-style: `2025-07-21T15-30-00`
 
 Automating Naming

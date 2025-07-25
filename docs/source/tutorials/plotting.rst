@@ -23,7 +23,7 @@ If you're already plotting with `matplotlib`, saving a figure is one line:
         plt.ylabel("x squared")
         plt.title("Quadratic Function")
 
-        log.save_plot("quadratic")
+        log.plot("quadratic")
 
 This creates:
 
@@ -40,7 +40,7 @@ You can save the same figure in multiple formats (e.g. PNG + PDF):
 
 .. code-block:: python
 
-    log.save_plot("quadratic", formats=["png", "pdf", "svg"])
+    log.plot("quadratic", formats=["png", "pdf", "svg"])
 
 The files will be:
 
@@ -60,7 +60,7 @@ If you create and manage `Figure` objects manually:
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    log.save_plot("explicit_fig", fig=fig)
+    log.plot("explicit_fig", fig=fig)
 
 Controlling DPI
 ---------------
@@ -69,13 +69,22 @@ You can control raster output resolution with the `dpi` argument:
 
 .. code-block:: python
 
-    log.save_plot("hires", dpi=300)
+    log.plot("hires", dpi=300)
 
-Organizing Plots into Subfolders
---------------------------------
+Organizing Plots
+----------------
 
-Use the `category=` argument to route plots into a subdirectory:
+All plots are saved inside the ``plots/`` subdirectory by default.
+To create structure, you can include folder-like prefixes in the plot name itself:
 
 .. code-block:: python
 
-    log.save_plot("overview", category="plots/summaries")
+    log.plot("summaries/overview")
+
+This will result in:
+
+.. code-block:: text
+
+    plots/
+      summaries/
+        overview.png

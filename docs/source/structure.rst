@@ -47,45 +47,42 @@ Description of Each Element
   Parameters used for the run, written as a single top-level dictionary.
 
 - **data/**  
-  Compressed NumPy array outputs, usually `.npz` files.
+  NumPy array outputs.
 
-  - Single array: saved with key ``data``
-  - Multiple arrays: saved with named keys
+  - Single array: saved as `.npy` via `log.array(...)`
+  - Multiple arrays: saved as `.npz` via `log.arrays(...)`
 
 - **plots/**  
   Saved matplotlib figures. Extensions may include ``.png``, ``.pdf``, or ``.svg``.
 
+  Saved using `log.plot(...)`.
+
 - **artifacts/**  
   Arbitrary outputs such as:
 
-  - ``.json``: structured output
-  - ``.txt``: logs, notes, diagnostics
-  - ``.pkl``: serialized objects
-  - Other formats (e.g. ``.bin``, ``.csv``, etc.)
+  - ``.json``: structured output via `log.json(...)`
+  - ``.txt``: logs, notes, diagnostics via `log.text(...)`
+  - ``.pkl``: serialized objects via `log.pickle(...)`
+  - Other formats like ``.bin`` via `log.bytes(...)`
 
-Custom Structure via Categories
--------------------------------
+Custom Structure via Manual Paths
+---------------------------------
 
-You can organize outputs into subfolders using the ``category=`` argument in most `Logbook` methods.  
-For example:
+To organize outputs into custom subfolders, use the indexing interface:
 
 .. code-block:: python
 
-    log.save_numpy("u_step100", u, category="data/intermediate")
-    log.save_json("metrics", metrics, category="artifacts/eval")
+    log["data/intermediate/u_step100.npy"].write_bytes(...)
+    log["artifacts/eval/metrics.json"].write_text(json.dumps(metrics))
+    log["plots/debug/loss_curve.pdf"]  # to store a figure manually
 
-This will create nested folders automatically:
-
-.. code-block:: bash
-
-    data/intermediate/u_step100.npz
-    artifacts/eval/metrics.json
+This ensures that parent directories are created as needed.
 
 Conventions
 -----------
 
 - All paths are **relative to the run directory**
-- All save methods are **atomic** and create parent directories if needed
+- All save methods create parent directories if needed
 - All logs and metadata are written in **plain text or JSON** formats
 
 This structure is intentionally flat, discoverable, and designed to support both manual inspection and programmatic tooling.
@@ -152,4 +149,3 @@ Unlike most ML tracking systems that store metrics in databases or hide them beh
 - **Permanent, discoverable logs**
 
 If it’s in a file, it’s searchable. If it’s structured, it’s scriptable.
-

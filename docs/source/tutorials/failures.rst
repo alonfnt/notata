@@ -54,7 +54,7 @@ This allows you to grep or filter failed runs easily.
 Capturing Tracebacks
 --------------------
 
-You can also log a full traceback for postmortem analysis:
+You can log a full traceback for postmortem analysis:
 
 .. code-block:: python
 
@@ -64,7 +64,7 @@ You can also log a full traceback for postmortem analysis:
         ...
     except Exception as e:
         tb = traceback.format_exc()
-        log.save_text("traceback", tb, category="artifacts/debug")
+        log.text("artifacts/debug/traceback", tb)
         log.mark_failed(str(e))
 
 This saves:
