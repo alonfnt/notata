@@ -12,45 +12,37 @@ from typing import Any, Dict, Optional, Union, Iterable, List
 
 
 class Logbook:
-    """Structured container for a single scientific run or experiment.
+    """
+    Structured log directory for a single scientific run.
 
-    A ``Logbook`` creates an isolated run directory and provides atomic, explicit
-    methods to persist parameters, arrays, plots, checkpoints, arbitrary
-    artifacts, and lifecycle metadata. It also records a chronological plain
-    text log and supports context manager semantics that automatically mark
-    completion or failure.
+    Each Logbook instance creates an isolated folder under the base directory,
+    where parameters, metadata, logs, arrays, plots, and other artifacts can be saved.
+    Supports context-manager semantics to automatically mark success/failure.
 
-    Run directory layout (illustrative)::
+    Example structure::
 
         log_<run_id>/
             log.txt
             metadata.json
-            params.yaml | params.json
-            checkpoints/
-                step_00001000.npz
-                step_00002000.npz
-            <user artifacts>.npz/.png/.pkl/.txt/.json
+            params.yaml
+            data/
+                states.npz
+            plots/
+                loss.png
+            artifacts/
+                config.json
+                model.pkl
 
-    Concurrency:
-        Methods are not internally synchronized; external coordination is
-        required if multiple threads or processes access the same instance.
+    Note:
+        Logbook methods are not thread- or process-safe. Use external coordination
+        when logging from multiple workers.
 
     Args:
-        run_id (str | int): Identifier for the run; incorporated into the
-            directory name as ``log_<run_id>``.
-        base_dir (str | Path, optional): Parent directory under which the run
-            directory is created.
-        params (dict, optional): Optional parameter dictionary to persist
-            immediately.
-        overwrite (bool, optional): If False and the target directory exists,
-            raises ``FileExistsError``.
-        preallocate (bool, optional): If True, creates an ``artifacts``
-            subdirectory eagerly.
-
-    Attributes:
-        run_id (str): String identifier of the run.
-        path (Path): Path object pointing to the run directory.
-        log_path (Path): Path to the chronological log file.
+        run_id: Unique string or int identifying the run.
+        base_dir: Parent directory under which to create the log directory.
+        params: Optional parameters to save immediately.
+        overwrite: If True, overwrite any existing run directory.
+        preallocate: If True, pre-create standard subdirectories.
     """
 
     def __init__(
@@ -60,9 +52,10 @@ class Logbook:
         params: Optional[Dict[str, Any]] = None,
         overwrite: bool = False,
         preallocate: bool = False
-    ):
+        ):
         self.run_id = str(run_id)
         self.path = Path(base_dir) / f"log_{self.run_id}"
+
         if self.path.exists() and not overwrite:
             raise FileExistsError(f"Run directory {self.path} already exists.")
         self.path.mkdir(parents=True, exist_ok=True)
@@ -73,41 +66,35 @@ class Logbook:
         self.datadir = self.path / "data"
         self.plotdir = self.path / "plots"
         self.artifactsdir = self.path / "artifacts"
-        for d in (self.datadir, self.plotdir, self.artifactsdir):
-            d.mkdir(parents=True, exist_ok=True)
+
+        if preallocate:
+            for d in (self.datadir, self.plotdir, self.artifactsdir):
+                d.mkdir(parents=True, exist_ok=True)
 
         self._start_time = time.time()
-        if params is not None:
-            self.save_params(params)
 
+        if params:
+            self.params(**params)
 
-        self._write_metadata({
-            "status": "initialized",
-            "start_time": self._now(),
-            "run_id": self.run_id
-        }, replace=True)
-
-        self.log("Logbook initialized")
+        self.meta(status="initialized", start_time=self._now, run_id=self.run_id)
+        self.info("Logbook initialized")
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
-            if self.current_status() not in ("complete", "failed"):
+            if self.status not in ("complete", "failed"):
                 self.mark_complete()
         else:
-            self.mark_failed(str(exc_value))
+            reason = str(exc_value) or f"{exc_type.__name__}: {exc_value}"
+            self.mark_failed(reason)
 
     def mark_complete(self):
         """Mark the run as complete and finalize metadata."""
-        runtime = round(time.time() - self._start_time, 6)
-        self._write_metadata({
-            "status": "complete",
-            "end_time": self._now(),
-            "runtime_sec": runtime
-        })
-        self.log("Marked complete")
+        runtime = round(self.elapsed, 6)
+        self.meta(status="complete", end_time=self._now, runtime_sec=runtime)
+        self.info("Marked complete")
 
     def mark_failed(self, reason: str):
         """Mark the run as failed.
@@ -115,36 +102,24 @@ class Logbook:
         Args:
             reason: Brief description of the failure cause.
         """
-        runtime = round(time.time() - self._start_time, 6)
-        self._write_metadata({
-            "status": "failed",
-            "end_time": self._now(),
-            "runtime_sec": runtime,
-            "failure_reason": reason
-        })
-        self.log(f"Marked failed: {reason}")
+        runtime = round(self.elapsed, 6)
+        self.meta(status="failed", end_time=self._now, runtime_sec=runtime, failure_reason=reason)
+        self.info(f"Marked failed: {reason}")
 
+    @property
     def _now(self) -> str:
-        """Return current timestamp as ISO 8601 string (seconds resolution).
-
-        Returns:
-            str: Current timestamp.
-        """
+        """Return current timestamp as ISO 8601 string (seconds resolution)."""
         return datetime.now().isoformat(timespec="seconds")
 
+    @property
     def elapsed(self) -> float:
-        """Return elapsed wall time since initialization.
-
-        Returns:
-            float: Elapsed seconds.
-        """
+        """Elapsed wall time in seconds since initialization."""
         return time.time() - self._start_time
 
-    def current_status(self) -> str:
-        """Return the current run status.
-
-        Returns:
-            str: Status value from metadata, or 'unknown' if absent.
+    @property
+    def status(self) -> str:
+        """Current run status.
+        ['initialized', 'complete', 'failed', 'unknown']
         """
         return self._read_metadata().get("status", "unknown")
 
@@ -156,11 +131,9 @@ class Logbook:
         return logger
 
     def _install_file_handler(self, logger: logging.Logger):
-        for h in logger.handlers:
-            if getattr(h, "_notata_tag", None) == self.run_id:
-                return
+        if any(getattr(h, "_notata_tag", None) == self.run_id for h in logger.handlers):
+            return
         fh = logging.FileHandler(self.log_path, encoding="utf-8")
-        # Bracketed ISO 8601 format for log messages
         fmt = logging.Formatter(
             fmt="[%(asctime)s] %(levelname)s %(message)s",
             datefmt="%Y-%m-%dT%H:%M:%S"
@@ -170,7 +143,7 @@ class Logbook:
         fh._notata_tag = self.run_id  # type: ignore[attr-defined]
         logger.addHandler(fh)
 
-    def log(self, message: str, level: int = logging.INFO):
+    def note(self, message: str, level: int = logging.INFO):
             self.logger.log(level, message)
 
     def info(self, msg): self.logger.info(msg)
@@ -178,59 +151,61 @@ class Logbook:
     def warning(self, msg): self.logger.warning(msg)
     def error(self, msg): self.logger.error(msg)
 
-
-    def save_params(self, params: Dict[str, Any], preferred: str = "yaml"):
-        """Persist run parameters in YAML or JSON.
-
-        Args:
-            params: Parameter dictionary.
-            preferred: Either 'yaml' or 'json'.
-
-        Raises:
-            ValueError: If preferred is not one of the supported formats.
-        """
-        if preferred == "yaml":
-            with open(self.path / "params.yaml", "w") as f:
-                yaml.dump(params, f, sort_keys=True)
-        elif preferred == "json":
-            with open(self.path / "params.json", "w") as f:
-                json.dump(params, f, indent=2, sort_keys=True)
-        else:
-            raise ValueError("preferred must be 'yaml' or 'json'")
-        self.log(f"Saved params ({preferred})")
-
-    def _metadata_path(self) -> Path:
-        """Return the metadata file path.
-
-        Returns:
-            Path: Path to metadata.json.
-        """
-        return self.path / "metadata.json"
-
-    def _read_metadata(self) -> Dict[str, Any]:
-        """Read metadata from disk.
-
-        Returns:
-            dict: Metadata dictionary (empty if file absent).
-        """
-        p = self._metadata_path()
-        if not p.exists():
-            return {}
-        with open(p) as f:
-            return json.load(f)
-
-    def _write_metadata(self, new_data: Dict[str, Any], replace: bool = False):
-        """Write metadata atomically.
-
-        Args:
-            new_data: Fields to write (or replace with).
-            replace: If True, overwrite existing metadata; else merge.
-        """
-        merged = new_data if replace else {**self._read_metadata(), **new_data}
+    def meta(self, **fields: Any):
+        """Update metadata.json with new fields (atomic merge)."""
+        meta = self._read_metadata()
+        meta.update(fields)
         tmp = self.path / "metadata.tmp"
         with open(tmp, "w") as f:
-            json.dump(merged, f, indent=2, sort_keys=True)
-        tmp.replace(self._metadata_path())
+            json.dump(meta, f, indent=2, sort_keys=True)
+        target_path = self.path / "metadata.json"
+        tmp.replace(target_path)
+
+
+    def _load_params(self) -> Dict[str, Any]:
+        """Load parameters from params.yaml or params.json (if present)."""
+        yaml_path = self.path / "params.yaml"
+        json_path = self.path / "params.json"
+
+        if yaml_path.exists():
+            with open(yaml_path) as f:
+                return yaml.safe_load(f) or {}
+
+        elif json_path.exists():
+            with open(json_path) as f:
+                return json.load(f)
+
+        return {}
+
+    def params(self, ext: str = "yaml", **kwargs: Any):
+        """Write run parameters in YAML or JSON.
+
+        Args:
+            ext: Either 'yaml' or 'json'.
+            **kwargs: Parameters to save.
+
+        Raises:
+            ValueError: If ext is not one of the supported formats.
+        """
+        path = self.path / f"params.{ext}"
+        existing = self._load_params()
+        updated = {**existing, **kwargs}
+        with open(path, "w") as f:
+            if ext == "yaml":
+                yaml.dump(updated, f, sort_keys=True)
+            elif ext == "json":
+                json.dump(updated, f, indent=2, sort_keys=True)
+            else:
+                raise ValueError("ext must be 'yaml' or 'json'")
+        self.info(f"Saved params ({ext}) in {path.relative_to(self.path)}")
+
+    def _read_metadata(self) -> Dict[str, Any]:
+        """Read metadata from disk."""
+        path = self.path / "metadata.json"
+        if not path.exists():
+            return {}
+        with open(path) as f:
+            return json.load(f)
 
     def _target_dir(self, category: Optional[str], fallback: Path) -> Path:
         if category is None:
@@ -239,130 +214,147 @@ class Logbook:
         p.mkdir(parents=True, exist_ok=True)
         return p
 
-    def save_numpy(self, name: str, array: np.ndarray, *, compressed: bool = True, category: Optional[str] = None):
-        """Save a single numpy array in an .npz archive under key 'data'.
+    def array(self, name: str, array: np.ndarray):
+        """Save a single NumPy array in .npy format.
 
         Args:
             name: Base filename without extension.
             array: Numpy array to save.
-            compressed: If True, use compressed format.
-        """
-        p = self._target_dir(category, self.datadir) / f"{name}.npz"
-        (np.savez_compressed if compressed else np.savez)(p, data=array)
-        self.log(f"Saved numpy array {name} -> {p.relative_to(self.path)}")
 
-    def save_arrays(self, name: str, compressed: bool = True, category: Optional[str] = None, **arrays: np.ndarray):
+        Example:
+            >>> log.array("velocity", np.array([0, 1, 2]))
+        """
+        path = self.datadir / f"{name}.npy"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(path, array)
+        self.info(f"Saved array {name} in {path.relative_to(self.path)}")
+
+    def arrays(self, name: str, compressed: bool = True, **arrays: np.ndarray):
         """Save multiple arrays into one compressed .npz archive.
 
         Args:
             name: Base filename without extension.
+            compressed: If True, use compressed format.
             **arrays: Named arrays (keys become archive keys).
-        """
-        p = self._target_dir(category, self.datadir) / f"{name}.npz"
-        (np.savez_compressed if compressed else np.savez)(p, **arrays)
-        self.log(f"Saved multiple arrays {name} -> {p.relative_to(self.path)}")
+         """
+        path = self.datadir / f"{name}.npz"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        saver = np.savez_compressed if compressed else np.savez
+        saver(path, **arrays)
+        self.info(f"Saved arrays {name} in {path.relative_to(self.path)}")
 
-    def save_plot(
+    def plot(
         self,
         name: str,
         fig: Optional[Figure] = None,
         dpi: int = 200,
-        formats: Iterable[str] = ("png",),
-        category: Optional[str] = None
+        formats: Iterable[str] = ("png",)
     ):
-        """Save a matplotlib figure in one or more formats.
+        """Save a matplotlib figure to `plots/{name}.{ext}`.
+
+        If no figure is provided, the current active figure (`plt.gcf()`) is used.
+        Supports saving in multiple formats simultaneously (e.g., PNG and PDF).
 
         Args:
             name: Base filename without extension.
-            fig: Figure instance; if None uses current active figure.
-            dpi: DPI for raster outputs.
-            formats: Iterable of file extensions (e.g., ('png','pdf')).
-        """
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError as e:
-            raise RuntimeError("matplotlib not installed; install it to use save_plot()") from e
+            fig: Matplotlib figure to save. Defaults to current figure.
+            dpi: Resolution (dots per inch) for raster formats like PNG.
+            formats: List or tuple of file extensions to save (e.g., ("png", "pdf")).
 
+        Raises:
+            RuntimeError: If matplotlib is not installed.
+
+        Example:
+            >>> log.plot("trajectory", fig=fig, formats=("png", "pdf"))
+        """
         if fig is None:
+            import matplotlib.pyplot as plt
             fig = plt.gcf()
 
-        d = self._target_dir(category, self.plotdir)
         for ext in formats:
-            filename = d / f"{name}.{ext}"
-            fig.savefig(str(filename), dpi=dpi, bbox_inches="tight")
-        self.log(f"Saved plot {name} ({'/'.join(formats)}) -> {d.relative_to(self.path)}")
+            path = self.plotdir / f"{name}.{ext}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(path, dpi=dpi, bbox_inches="tight")
 
-    def save_text(self, name: str, text: str, category: Optional[str] = None):
-        """Save plain text.
+        self.info(f"Saved plot {name} ({'/'.join(formats)}) in {self.plotdir.relative_to(self.path)}")
 
-        Args:
-            name: Base filename without extension.
-            text: Content to write.
-        """
-        p = self._target_dir(category, self.artifactsdir) / f"{name}.txt"
-        with open(p, "w") as f:
-            f.write(text)
-        self.log(f"Saved text {name} -> {p.relative_to(self.path)}")
-
-    def save_json(self, name: str, data: Dict[str, Any], category: Optional[str] = None):
-        """Save a JSON artifact.
+    def text(self, name: str, content: str):
+        """Save plain text to artifacts/{name}.txt.
 
         Args:
             name: Base filename without extension.
-            data: JSON-serializable dictionary.
+            content: Text content to write.
+
+        Example:
+            >>> log.text("stdout", "Simulation complete.")
         """
-        p = self._target_dir(category, self.artifactsdir) / f"{name}.json"
-        with open(p, "w") as f:
+        path = self.artifactsdir / f"{name}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        self.info(f"Saved text {name} in {path.relative_to(self.path)}")
+
+    def json(self, name: str, data: Dict[str, Any]):
+        """Save a JSON file in artifacts/{name}.json.
+
+        Args:
+            name: Base filename without extension.
+            data: Dictionary to serialize as JSON.
+
+        Example:
+            >>> log.json("metrics", {"loss": 0.01})
+        """
+        path = self.artifactsdir / f"{name}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
             json.dump(data, f, indent=2, sort_keys=True)
-        self.log(f"Saved json {name} -> {p.relative_to(self.path)}")
+        self.info(f"Saved JSON {name} in {path.relative_to(self.path)}")
 
-    def save_pickle(self, name: str, obj: Any, protocol: int = pickle.HIGHEST_PROTOCOL, category: Optional[str] = None):
-        """Serialize an object with pickle.
+    def pickle(self, name: str, obj: Any, protocol: int = pickle.HIGHEST_PROTOCOL):
+        """Serialize a Python object with pickle to artifacts/{name}.pkl.
 
         Args:
             name: Base filename without extension.
-            obj: Python object to serialize.
-            protocol: Pickle protocol version.
+            obj: Object to serialize.
+            protocol: Pickle protocol version to use.
+
+        Example:
+            >>> log.pickle("model", model_object)
         """
-        p = self._target_dir(category, self.artifactsdir) / f"{name}.pkl"
-        with open(p, "wb") as f:
+        path = self.artifactsdir / f"{name}.pkl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
             pickle.dump(obj, f, protocol=protocol)
-        self.log(f"Saved pickle {name} -> {p.relative_to(self.path)}")
+        self.info(f"Saved pickle {name} in {path.relative_to(self.path)}")
 
-    def save_bytes(self, name: str, data: bytes, category: Optional[str] = None):
-        """Save raw bytes to a file.
+    def bytes(self, name: str, data: bytes):
+        """Save raw bytes to artifacts/{name}.
 
         Args:
-            name: Filename (may include extension).
-            data: Bytes to write.
+            name: Output filename (with extension).
+            data: Byte content to write.
+
+        Example:
+            >>> log.bytes("weights.bin", b"\x00\x01")
         """
-        p = self._target_dir(category, self.artifactsdir) / name
-        with open(p, "wb") as f:
+        path = self.artifactsdir / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
             f.write(data)
-        self.log(f"Saved bytes {name} -> {p.relative_to(self.path)}")
+        self.info(f"Saved bytes {name} in {path.relative_to(self.path)}")
 
-    def artifact_path(self, *parts: str, create: bool = True) -> Path:
-        """Return a path inside the run directory for custom artifacts.
-
-        Args:
-            *parts: Path components relative to the run directory.
-            create: If True, ensures parent directories exist.
-
-        Returns:
-            Path: Fully qualified artifact path.
-        """
-        p = self.path.joinpath(*parts)
-        if create:
-            p.parent.mkdir(parents=True, exist_ok=True)
-        return p
-
-    def exists(self, relative: str) -> bool:
-        """Check if a relative path exists inside the run directory.
+    def __getitem__(self, relative: str) -> Path:
+        """Get a path inside the run directory.
 
         Args:
-            relative: Relative path string.
+            relative: Relative path from the run root.
 
         Returns:
-            bool: True if path exists, else False.
+            Path object for that file or directory (not checked for existence).
+
+        Example:
+            >>> log["artifacts/config.json"].read_text()
         """
-        return (self.path / relative).exists()
+        path = self.path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path

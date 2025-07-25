@@ -14,11 +14,11 @@ By default, all artifacts are saved under:
 Text Files
 ----------
 
-Use `save_text()` to write plain `.txt` files:
+Use `text()` to write plain `.txt` files:
 
 .. code-block:: python
 
-    log.save_text("notes", "Run converged in 1.3s\nno issues detected")
+    log.text("notes", "Run converged in 1.3s\nno issues detected")
 
 This saves:
 
@@ -30,12 +30,12 @@ This saves:
 JSON
 ----
 
-Use `save_json()` for structured, human-readable data:
+Use `json()` for structured, human-readable data:
 
 .. code-block:: python
 
     metrics = {"max": 0.92, "mean": 0.81}
-    log.save_json("metrics", metrics)
+    log.json("metrics", metrics)
 
 Saved as:
 
@@ -47,11 +47,11 @@ Saved as:
 Pickle
 ------
 
-Use `save_pickle()` for serialized Python objects:
+Use `pickle()` to serialize Python objects:
 
 .. code-block:: python
 
-    log.save_pickle("model", my_model)
+    log.pickle("model", my_model)
 
 Saved as:
 
@@ -60,28 +60,28 @@ Saved as:
     artifacts/
       model.pkl
 
-Useful when saving intermediate results, models, or cached data.
+Useful for saving intermediate results, models, or cached data.
 
 Binary Blobs
 ------------
 
-Use `save_bytes()` to save raw binary content:
+Use `bytes()` to write raw binary content:
 
 .. code-block:: python
 
-    log.save_bytes("weights.raw", b"\x01\x02\x03")
+    log.bytes("weights.raw", b"\x01\x02\x03")
 
 This can be used for custom formats or compressed binaries.
 
 Organizing Artifacts
 --------------------
 
-Artifacts can be routed into subfolders using `category=`:
+To save files in nested folders, use the indexing interface:
 
 .. code-block:: python
 
-    log.save_json("config", config_dict, category="artifacts/settings")
-    log.save_text("crash_dump", traceback_text, category="artifacts/debug")
+    log["artifacts/settings/config.json"].write_text(json.dumps(config_dict))
+    log["artifacts/debug/crash_dump.txt"].write_text(traceback_text)
 
 This will create:
 
@@ -96,23 +96,26 @@ This will create:
 File Naming Conventions
 -----------------------
 
-- File extension is inferred from the method (`.json`, `.txt`, `.pkl`)
-- Use short, descriptive names
-- Avoid slashes in names — use `category=` instead
+- File extension is determined by the method (`.json`, `.txt`, `.pkl`) or by your key when using `log[...]`
+- Use lowercase, descriptive names
+- Avoid redundant extensions (e.g. `config.json.json`)
+- Prefer ISO-style timestamps if versioning (e.g. `weights_2025-07-25T12-00-00.pkl`)
 
 Overwriting
 -----------
 
-Each method will **overwrite** the file if it already exists.  
-You can implement your own versioning by appending timestamps or unique suffixes to names.
+Each method **overwrites** the target file if it already exists.
+To implement versioning, append suffixes or timestamps manually.
 
 Best Practices
 --------------
 
-- Use `save_json()` for any final stats or metrics you want to tabulate
-- Use `save_text()` for logs, warnings, command-line args, or notes
-- Use `save_pickle()` only when portability isn't a concern
+- Use `json()` for any final stats or metrics
+- Use `text()` for logs, warnings, or notes
+- Use `pickle()` only when portability isn't a concern
+- Use `bytes()` for compressed or binary formats
 - Keep everything self-contained inside the run directory
+- Use `log[...]` when you need full control over paths and filenames
 
 Next Steps
 ----------

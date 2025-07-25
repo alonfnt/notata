@@ -33,9 +33,9 @@ The most convenient way to use a ``Logbook`` is with a context manager. This ens
             if (n+1) % 2000 == 0:
                 log.info(f"step={n+1} x={x:.4f} v={v:.4f} E={E[n]:.6f}")
 
-        log.save_arrays("trajectory", x=xs, v=vs)
-        log.save_numpy("energy", E)
-        log.save_json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
+        log.arrays("trajectory", x=xs, v=vs)
+        log.array("energy", E)
+        log.json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
 
 What gets saved
 ---------------
@@ -50,7 +50,7 @@ After this run, your output directory will contain:
       params.yaml
       data/
         trajectory.npz
-        energy.npz
+        energy.npy
       artifacts/
         final_state.json
 
@@ -71,13 +71,19 @@ These will go into ``log.txt`` with timestamps and log levels.
 Parameters
 ----------
 
-Parameters passed via ``params=...`` are saved immediately to ``params.yaml`` (or ``params.json``).
+Parameters passed via ``params=...`` are saved immediately to ``params.yaml``.
 
-You can also save them later:
+You can also write them later:
 
 .. code-block:: python
 
-    log.save_params({"dt": 1e-3, "omega": 2.0}, preferred="yaml")
+    log.params(omega=2.0, dt=1e-3)
+
+To inspect saved parameters:
+
+.. code-block:: python
+
+    print(log.params["omega"])
 
 Next Steps
 ----------
@@ -85,4 +91,3 @@ Next Steps
 - To see how to handle failures or manual control, see: :doc:`manual`
 - For saving plots, see: :doc:`plotting`
 - For organizing large outputs, see: :doc:`artifacts`
-

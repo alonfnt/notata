@@ -21,7 +21,7 @@ Basic Pattern
             # update T ...
             if (step + 1) % 100 == 0:
                 log.info(f"step={step+1}")
-        log.save_numpy("T_final", T)
+        log.array("T_final", T)
         log.mark_complete()
 
     except Exception as e:
@@ -58,7 +58,7 @@ Checking status
 
 .. code-block:: python
 
-    log.current_status()
+    log.status
 
 Returns one of:
 

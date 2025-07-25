@@ -33,8 +33,8 @@ Here’s how to structure a sweep over multiple parameter combinations:
                 v += 0.5*(a + a_new)*dt
                 xs[n] = x
 
-            log.save_numpy("x", xs)
-            log.save_json("final_state", {"x": float(x), "v": float(v)})
+            log.array("x", xs)
+            log.json("final_state", {"x": float(x), "v": float(v)})
 
 Organizing Sweep Outputs
 ------------------------
@@ -59,7 +59,7 @@ To compare sweep results later, save a final summary metric for each run:
 .. code-block:: python
 
     energy = 0.5 * (v**2 + (omega * x)**2)
-    log.save_json("final_metrics", {"E": float(energy)})
+    log.json("final_metrics", {"E": float(energy)})
 
 Then collect across runs:
 
@@ -71,9 +71,8 @@ Tips for Large Sweeps
 ---------------------
 
 - Use compact, informative `run_id`s (avoid slashes or long floats)
-- Use `category=...` to group intermediate outputs or diagnostics
 - Set `overwrite=True` if re-running a sweep with the same IDs
-- Track failures with `current_status()` or grep on metadata
+- Track failures with `status` in `metadata.json` or via `log.status`
 
 Example: Resuming only failed runs
 ----------------------------------

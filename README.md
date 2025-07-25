@@ -43,9 +43,9 @@ with Logbook("oscillator_dt1e-3", params={"omega": 2.0, "dt": 1e-3, "steps": 10_
         if (n+1) % 2000 == 0:
             log.info(f"step={n+1} x={x:.4f} v={v:.4f} E={E[n]:.6f}")
 
-    log.save_arrays("trajectory", x=xs, v=vs)
-    log.save_numpy("energy", E)
-    log.save_json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
+    log.arrays("trajectory", x=xs, v=vs)
+    log.array("energy", E)
+    log.json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
 ```
 
 ### Manual Lifecycle
@@ -53,7 +53,8 @@ with Logbook("oscillator_dt1e-3", params={"omega": 2.0, "dt": 1e-3, "steps": 10_
 from notata import Logbook
 import numpy as np
 
-log = Logbook("heat_manual", params={"Nx": 64, "Ny": 64, "kappa": 0.01, "steps": 500})
+log = Logbook("heat_manual")
+log.params(Nx=64, Ny=64, kappa=0.01, steps=500)
 Nx = Ny = 64
 kappa = 0.01
 dx = 1.0
@@ -69,7 +70,7 @@ for step in range(500):
     if (step+1) % snap_every == 0:
         log.save_numpy(f"T_step{step+1}", T, category="data/intermediate")
         log.info(f"step={step+1} maxT={T.max():.4f}")
-log.save_json("final_stats", {"max": float(T.max()), "mean": float(T.mean())})
+log.json("final_stats", {"max": float(T.max()), "mean": float(T.mean())})
 log.mark_complete()
 ```
 
@@ -112,14 +113,13 @@ where the files follow:
 | `log.txt`                    | Plain text log; lines: `[YYYY-MM-DDTHH:MM:SS] LEVEL message`                                           |
 | `metadata.json`              | Run metadata: `status`, `start_time`, optional `end_time`, `runtime_sec`, optional `failure_reason`, `run_id` |
 | `params.yaml` / `params.json`| Parameter snapshot (latest saved form)                                                                 |
-| `data/*.npz`                 | Array archives; single array → key `data`; multi-array save → keys = argument names                    |
-| `data/**/`                   | Additional numeric outputs (via `category="data/..."`)                                                 |
+| `data/*.npy` / `data/*.npz` | `.npy` for single arrays (`array()`); `.npz` for multi-array bundles (`arrays(...)`)                    |
 | `plots/*.(png\|pdf\|svg)`    | Saved figures (`save_plot`)                                                                            |
 | `artifacts/*.txt`            | Text artifacts (`save_text`)                                                                           |
 | `artifacts/*.json`           | JSON artifacts (`save_json`)                                                                           |
 | `artifacts/*.pkl`            | Pickled objects (`save_pickle`)                                                                        |
 | `artifacts/*` (other)        | Raw bytes (`save_bytes`)                                                                               |
-| `artifacts/**/`              | Nested artifact categories (e.g. `category="artifacts/logs"`)                                          |
+| `artifacts/**/`              | Nested artifact categories                                                                             |
 
 ## Citation
 You don't have to, but if you use `notata` in your research and need to reference it, please cite it as follows:

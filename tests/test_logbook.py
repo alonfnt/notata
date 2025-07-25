@@ -66,8 +66,8 @@ def test_context_manager_marks_failed(tmp_path: Path):
 
 def test_log_appends_lines(tmp_path: Path):
     log = Logbook("logging", base_dir=tmp_path)
-    log.log("First")
-    log.log("Second")
+    log.note("First")
+    log.note("Second")
     content = read_text(log.log_path)
     assert "First" in content
     assert "Second" in content
@@ -79,22 +79,22 @@ def test_log_appends_lines(tmp_path: Path):
 
 def test_save_params_yaml_and_json(tmp_path: Path):
     log = Logbook("params", base_dir=tmp_path)
-    log.save_params({"a": 1}, preferred="yaml")
+    log.params(ext='yaml', a=1)
     assert (log.path / "params.yaml").is_file()
-    log.save_params({"a": 2}, preferred="json")
+    log.params(ext='json', a=2)
     assert (log.path / "params.json").is_file()
     with pytest.raises(ValueError):
-        log.save_params({"x": 3}, preferred="txt")
+        log.params(ext='txt', x=3)
 
 
 # ---------- Metadata Helpers ----------
 
 def test_current_status_and_elapsed(tmp_path: Path):
     log = Logbook("status", base_dir=tmp_path)
-    assert log.current_status() == "initialized"
-    assert log.elapsed() >= 0.0
+    assert log.status == "initialized"
+    assert log.elapsed >= 0.0
     log.mark_complete()
-    assert log.current_status() == "complete"
+    assert log.status == "complete"
 
 
 def test_mark_failed_sets_fields(tmp_path: Path):
@@ -108,21 +108,21 @@ def test_mark_failed_sets_fields(tmp_path: Path):
 
 # ---------- Array Saving ----------
 
-def test_save_numpy_creates_npz(tmp_path: Path):
+def test_save_numpy_creates_npy(tmp_path: Path):
     log = Logbook("arrays", base_dir=tmp_path)
     arr = np.arange(10)
-    log.save_numpy("vec", arr)
-    f = log.datadir / "vec.npz"
+    log.array("vec", arr)
+    f = log.datadir / "vec.npy"
     assert f.is_file()
     loaded = np.load(f)
-    assert np.array_equal(loaded["data"], arr)
+    assert np.array_equal(loaded, arr)
 
 
 def test_save_arrays_multiple_keys(tmp_path: Path):
     log = Logbook("multiarrays", base_dir=tmp_path)
     a = np.ones(5)
     b = np.zeros(3)
-    log.save_arrays("bundle", a=a, b=b)
+    log.arrays("bundle", a=a, b=b)
     z = np.load(log.datadir / "bundle.npz")
     assert np.array_equal(z["a"], a)
     assert np.array_equal(z["b"], b)
@@ -135,7 +135,7 @@ def test_save_plot_png_and_pdf(tmp_path: Path):
     log = Logbook("plots", base_dir=tmp_path)
     plt.figure()
     plt.plot([0, 1], [0, 1])
-    log.save_plot("line", formats=("png", "pdf"))
+    log.plot("line", formats=("png", "pdf"))
     assert (log.plotdir / "line.png").is_file()
     assert (log.plotdir / "line.pdf").is_file()
 
@@ -144,42 +144,32 @@ def test_save_plot_png_and_pdf(tmp_path: Path):
 
 def test_save_text_json_pickle_bytes(tmp_path: Path):
     log = Logbook("artifacts", base_dir=tmp_path)
-    log.save_text("note", "hello")
+
+    log.text("note", "hello")
     assert (log.artifactsdir / "note.txt").read_text().strip() == "hello"
 
-    log.save_json("meta_extra", {"k": 7})
+    log.json("meta_extra", {"k": 7})
     data = json.loads((log.artifactsdir / "meta_extra.json").read_text())
     assert data["k"] == 7
 
     obj = {"a": [1, 2, 3]}
-    log.save_pickle("obj", obj)
+    log.pickle("obj", obj)
     with open(log.artifactsdir / "obj.pkl", "rb") as f:
         restored = pickle.load(f)
     assert restored == obj
 
-    log.save_bytes("raw.bin", b"\x00\x01")
+    log.bytes("raw.bin", b"\x00\x01")
     assert (log.artifactsdir / "raw.bin").read_bytes() == b"\x00\x01"
 
 
 # ---------- artifact_path and exists ----------
 
-def test_artifact_path_creation_and_exists(tmp_path: Path):
+def test_getitem_path_and_exists(tmp_path: Path):
     log = Logbook("artifact", base_dir=tmp_path)
-    p = log.artifact_path("nested", "dir", "file.txt")
+    p = log["nested/dir/file.txt"]
     p.write_text("data")
-    assert log.exists("nested/dir/file.txt")
-    assert not log.exists("nested/dir/missing.txt")
-
-
-def test_artifact_path_no_create_flag(tmp_path: Path):
-    log = Logbook("artifact2", base_dir=tmp_path)
-    p = log.artifact_path("new", "sub", "a.txt", create=False)
-    # parent not created yet
-    assert not p.parent.exists()
-    p.parent.mkdir(parents=True)
-    p.write_text("ok")
-    assert log.exists("new/sub/a.txt")
-
+    assert log["nested/dir/file.txt"].exists()
+    assert not log["nested/dir/missing.txt"].exists()
 
 # ---------- mark_complete & mark_failed idempotency safety ----------
 
@@ -215,9 +205,9 @@ def test_overwrite_true_allows_reuse(tmp_path: Path):
 
 def test_log_timestamp_order(tmp_path: Path):
     log = Logbook("ts_order", base_dir=tmp_path)
-    log.log("A")
+    log.info("A")
     time1 = read_text(log.log_path).splitlines()[-1]
-    log.log("B")
+    log.info("B")
     time2 = read_text(log.log_path).splitlines()[-1]
     # Basic lexical timestamp ordering: second line should be >= first
     ts1 = time1.split("]")[0].strip("[")
