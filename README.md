@@ -12,6 +12,9 @@
 
 Each `Logbook` creates a run directory with parameters, arrays, plots, artifacts, metadata, and a timestamped log. **Explicit. Reproducible. Grep-friendly**.
 
+Unlike ML logging tools (e.g. W&B, TensorBoard, MLflow), notata is built for scientific workflows such as simulations, solvers, and numerical experiments, where file-based logging matters more than dashboards. 
+**No servers, no setup, no reinventing the wheel for each new project.**
+
 ## Installation
 ```bash
 pip install notata
@@ -19,6 +22,7 @@ pip install notata
 
 ## Quick Start
 ### Context Manager
+Logs a single simulation run to `log_<run_id>/`, including arrays, metadata, and messages.
 ```python
 from notata import Logbook
 import numpy as np
@@ -47,8 +51,10 @@ with Logbook("oscillator_dt1e-3", params={"omega": 2.0, "dt": 1e-3, "steps": 10_
     log.array("energy", E)
     log.json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
 ```
+This creates a structured folder with logs, parameters, and output arrays for reproducibility.
 
 ### Manual Lifecycle
+For full control, create a `Logbook` manually and mark it complete when you're done.
 ```python
 from notata import Logbook
 import numpy as np
@@ -68,7 +74,7 @@ for step in range(500):
     lap = (np.roll(T,1,0)+np.roll(T,-1,0)+np.roll(T,1,1)+np.roll(T,-1,1)-4*T)
     T += kappa * dt * lap
     if (step+1) % 100 == 0:
-        log.save_numpy(f"T_step{step+1}", T, category="data/intermediate")
+        log.array(f"states/T_step{step+1}", T)
         log.info(f"step={step+1} maxT={T.max():.4f}")
 log.json("final_stats", {"max": float(T.max()), "mean": float(T.mean())})
 log.mark_complete()
@@ -80,7 +86,7 @@ Automatically log multiple runs, each in its own directory, with structured meta
 from notata import Experiment
 import numpy as np
 
-exp = Experiment("unstable_fall")
+exp = Experiment("falling_ball")
 
 for dt in [0.01, 0.5]:  # stable vs unstable
     log = exp.add(dt=dt, skip_existing=True)
@@ -129,6 +135,11 @@ where the files follow:
 | `artifacts/*.pkl`            | Pickled objects (`save_pickle`)                                                                        |
 | `artifacts/*` (other)        | Raw bytes (`save_bytes`)                                                                               |
 | `artifacts/**/`              | Nested artifact categories                                                                             |
+
+## Documentation
+
+Full documentation, tutorials, and examples are available at:
+[https://notata.readthedocs.io/en/latest/](https://notata.readthedocs.io/en/latest/)
 
 ## Citation
 You don't have to, but if you use `notata` in your research and need to reference it, please cite it as follows:
