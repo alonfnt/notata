@@ -53,8 +53,6 @@ with Logbook("oscillator_dt1e-3", params={"omega": 2.0, "dt": 1e-3, "steps": 10_
 from notata import Logbook
 import numpy as np
 
-log = Logbook("heat_manual")
-log.params(Nx=64, Ny=64, kappa=0.01, steps=500)
 Nx = Ny = 64
 kappa = 0.01
 dx = 1.0
@@ -63,36 +61,47 @@ dt = 0.2 * dx*dx / kappa
 X, Y = np.meshgrid(np.linspace(-1,1,Nx), np.linspace(-1,1,Ny), indexing="ij")
 T = np.exp(-6*(X**2 + Y**2))
 
-snap_every = 100
+log = Logbook("heat_eq")
+log.params(Nx=Nx, Ny=Ny, kappa=kappa, steps=steps)
+
 for step in range(500):
     lap = (np.roll(T,1,0)+np.roll(T,-1,0)+np.roll(T,1,1)+np.roll(T,-1,1)-4*T)
     T += kappa * dt * lap
-    if (step+1) % snap_every == 0:
+    if (step+1) % 100 == 0:
         log.save_numpy(f"T_step{step+1}", T, category="data/intermediate")
         log.info(f"step={step+1} maxT={T.max():.4f}")
 log.json("final_stats", {"max": float(T.max()), "mean": float(T.mean())})
 log.mark_complete()
 ```
+### Parameter sweeps with `Experiment`
+Automatically log multiple runs, each in its own directory, with structured metadata and failure tracking:
 
-### Failure capture
 ```python
-from notata import Logbook
+from notata import Experiment
 import numpy as np
 
-log = Logbook("unstable_run", params={"dt": 0.5})
-try:
-    dt = 0.5  # too large for stability
-    x, v, w = 1.0, 0.0, 5.0
-    for step in range(1000):
-        a = -w**2 * x
-        v += a * dt
-        x += v * dt
-        if not np.isfinite(x):
-            raise RuntimeError("Diverged")
-    log.mark_complete()
-except Exception as e:
-    log.mark_failed(str(e))
+exp = Experiment("unstable_fall")
+
+for dt in [0.01, 0.5]:  # stable vs unstable
+    log = exp.add(dt=dt, skip_existing=True)
+    if log is None:
+        continue
+    with log:
+        v, h = 0.0, 100.0
+        for _ in range(100):
+            v += 9.81 * dt
+            h -= v * dt
+            if h < 0:
+                raise RuntimeError(f"Object hit the ground (h={h:.2f})")
+        log.json("metrics", {"final_height": h, "final_speed": v})
 ```
+Each run creates a `log_<run_id>/` folder and appends a row to `index.csv` with parameters, status, and final metrics:
+
+| run\_id                 | dt   | status   | final\_height | final\_speed |
+| ----------------------- | ---- | -------- | ------------- | ------------ |
+| falling\_ball\_dt\_0.01 | 0.01 | complete | 95.04595      | 9.81         |
+| falling\_ball\_dt\_0.5  | 0.5  | missing  |               |              |
+
 
 ## Output format
 Data is stored as following:
