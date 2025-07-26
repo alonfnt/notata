@@ -10,7 +10,6 @@ license = {file = "LICENSE"}
 requires-python = ">=3.8"
 dependencies = [
   "numpy",
-  "matplotlib",
   "pyyaml"
 ]
 
@@ -20,3 +19,11 @@ version = {attr = "notata.__version__"}
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+  "matplotlib",
+  "pandas",
+  "pytest",
+  "pytest-cov"
+]
