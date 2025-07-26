@@ -6,9 +6,12 @@ import pickle
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from typing import Any, Dict, Optional, Union, Iterable, List
+from typing import Any, Dict, Optional, Union, Iterable, Callable
+
+try:
+    from matplotlib.figure import Figure
+except ImportError:
+    Figure = Any
 
 
 class Logbook:
@@ -43,6 +46,8 @@ class Logbook:
         params: Optional parameters to save immediately.
         overwrite: If True, overwrite any existing run directory.
         preallocate: If True, pre-create standard subdirectories.
+        callback: Optional function to call when marking the run as complete or failed.
+                    It receives the Logbook instance as the only argument.
     """
 
     def __init__(
@@ -51,10 +56,12 @@ class Logbook:
         base_dir: Union[str, Path] = "outputs",
         params: Optional[Dict[str, Any]] = None,
         overwrite: bool = False,
-        preallocate: bool = False
+        preallocate: bool = False,
+        callback: Optional[Callable] = None
         ):
         self.run_id = str(run_id)
         self.path = Path(base_dir) / f"log_{self.run_id}"
+        self.callback = callback
 
         if self.path.exists() and not overwrite:
             raise FileExistsError(f"Run directory {self.path} already exists.")
@@ -95,6 +102,8 @@ class Logbook:
         runtime = round(self.elapsed, 6)
         self.meta(status="complete", end_time=self._now, runtime_sec=runtime)
         self.info("Marked complete")
+        if self.callback:
+            self.callback(self)
 
     def mark_failed(self, reason: str):
         """Mark the run as failed.
@@ -105,6 +114,8 @@ class Logbook:
         runtime = round(self.elapsed, 6)
         self.meta(status="failed", end_time=self._now, runtime_sec=runtime, failure_reason=reason)
         self.info(f"Marked failed: {reason}")
+        if self.callback:
+            self.callback(self)
 
     @property
     def _now(self) -> str:
@@ -268,7 +279,10 @@ class Logbook:
             >>> log.plot("trajectory", fig=fig, formats=("png", "pdf"))
         """
         if fig is None:
-            import matplotlib.pyplot as plt
+            try:
+                import matplotlib.pyplot as plt
+            except ImportError:
+                raise RuntimeError("matplotlib is required to save plots. Install it with `pip install matplotlib`.")
             fig = plt.gcf()
 
         for ext in formats:

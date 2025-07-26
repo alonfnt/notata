@@ -11,3 +11,4 @@ Tutorials
    tutorials/artifacts
    tutorials/failures
    tutorials/shell_usage
+   tutorials/experiment

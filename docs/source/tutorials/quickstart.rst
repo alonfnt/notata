@@ -3,6 +3,8 @@ Quickstart
 
 The ``Logbook`` is the core of ``notata``. It represents a single run of a simulation or experiment. When you create a ``Logbook``, it sets up a dedicated run directory, initializes metadata, and lets you persist all relevant outputs in a structured format.
 
+To manage multiple related runs, you can use the ``Experiment`` object, which helps automate naming, logging, and indexing across parameter sweeps.
+
 Basic Usage: Context Manager
 ----------------------------
 
@@ -13,29 +15,46 @@ The most convenient way to use a ``Logbook`` is with a context manager. This ens
     from notata import Logbook
     import numpy as np
 
-    with Logbook("oscillator_dt1e-3", params={"omega": 2.0, "dt": 1e-3, "steps": 10_000}) as log:
-        omega = 2.0
-        dt = 1e-3
-        steps = 10_000
+    omega = 2.0
+    dt = 1e-3
+    steps = 5000
+
+    with Logbook("oscillator_dt1e-3", params={"omega": omega, "dt": dt, "steps": steps}) as log:
         x, v = 1.0, 0.0
-
-        xs = np.empty(steps)
-        vs = np.empty(steps)
-        E  = np.empty(steps)
-
+        xs = []
         for n in range(steps):
             a = -omega**2 * x
-            x += v*dt + 0.5*a*dt*dt
+            x += v * dt + 0.5 * a * dt**2
             a_new = -omega**2 * x
-            v += 0.5*(a + a_new)*dt
-            xs[n], vs[n] = x, v
-            E[n] = 0.5*(v**2 + (omega*x)**2)
-            if (n+1) % 2000 == 0:
-                log.info(f"step={n+1} x={x:.4f} v={v:.4f} E={E[n]:.6f}")
+            v += 0.5 * (a + a_new) * dt
+            xs.append(x)
 
-        log.arrays("trajectory", x=xs, v=vs)
-        log.array("energy", E)
-        log.json("final_state", {"x": float(x), "v": float(v), "E": float(E[-1])})
+        log.array("x_values", np.array(xs))
+        log.json("final_state", {"x": float(x), "v": float(v)})
+
+Sweep Runs with Experiment
+--------------------------
+
+To log many runs with different parameters:
+
+.. code-block:: python
+
+    from notata import Experiment
+
+    exp = Experiment("oscillator_sweep")
+
+    for omega in [1.0, 2.0]:
+        for dt in [1e-3, 2e-3]:
+            log = exp.add(omega=omega, dt=dt, steps=5000)
+            with log:
+                # simulate system with current parameters
+                # as with a normal logbook
+                ...
+
+                # Save metrics or results to be indexed too
+                log.json("metrics", {"final_energy": 0.991})
+
+To see how to use `Experiment` in more detail, see: :doc:`experiment`
 
 What gets saved
 ---------------
@@ -49,10 +68,11 @@ After this run, your output directory will contain:
       metadata.json
       params.yaml
       data/
-        trajectory.npz
-        energy.npy
+        x_values.npy
       artifacts/
         final_state.json
+
+To see how to organize large outputs, see: :doc:`artifacts` and :doc:`../structure`.
 
 Logging
 -------
@@ -67,6 +87,8 @@ Inside the loop, you can use:
     log.error(...)
 
 These will go into ``log.txt`` with timestamps and log levels.
+
+You can read more on how to inspect logs in :doc:`shell_usage`.
 
 Parameters
 ----------
