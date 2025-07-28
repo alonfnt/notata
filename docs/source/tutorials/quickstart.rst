@@ -107,6 +107,39 @@ To inspect saved parameters:
 
     print(log.params["omega"])
 
+Using Readers
+-------------
+
+Once your runs are logged, you can use ``LogReader`` and ``ExperimentReader`` to access the data.
+
+Example: Accessing a single run
+
+.. code-block:: python
+
+    from notata.reader import LogReader
+
+    reader = LogReader("outputs/log_oscillator_dt1e-3")
+    print("Run ID:", reader.run_id)
+    print("Metadata:", reader.meta)
+    print("Parameters:", reader.params)
+    energy = reader.load_array("x_values")
+    print("Energy array:", energy)
+
+Example: Accessing multiple runs
+
+.. code-block:: python
+
+    from notata.reader import ExperimentReader
+
+    exp = ExperimentReader("outputs/oscillator_sweep")
+    for run in exp:
+        print("Run ID:", run.run_id)
+        print("Metadata:", run.meta)
+        print("Parameters:", run.params)
+
+Readers make it easy to query and analyze your logged data programmatically.
+For more information you can check :doc:`readers`.
+
 Next Steps
 ----------
 
