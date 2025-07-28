@@ -8,6 +8,34 @@ from notata.logbook import Logbook
 
 
 class Experiment:
+    """
+    Structured manager for organizing and accessing multiple scientific runs.
+
+    Each Experiment instance creates an isolated folder under the base directory,
+    where individual runs are stored as subdirectories. Supports adding new runs,
+    recording metrics, and querying results.
+
+    Example structure::
+
+        experiment_name/
+            index.csv
+            runs/
+                log_<run_id>/
+                    metadata.json
+                    params.yaml
+                    data/
+                        states.npz
+                    plots/
+                        loss.png
+                    artifacts/
+                        config.json
+                        model.pkl
+
+    Args:
+        name: Name of the experiment.
+        base_dir: Parent directory under which to create the experiment directory.
+    """
+
     def __init__(self, name: str, base_dir: Path | str = "outputs"):
         self.name = name
         self.base_dir = Path(base_dir)

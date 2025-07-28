@@ -12,7 +12,7 @@
 
 Each `Logbook` creates a run directory with parameters, arrays, plots, artifacts, metadata, and a timestamped log. **Explicit. Reproducible. Grep-friendly**.
 
-Unlike ML logging tools (e.g. W&B, TensorBoard, MLflow), notata is built for scientific workflows such as simulations, solvers, and numerical experiments, where file-based logging matters more than dashboards. 
+Unlike ML logging tools (e.g. W&B, TensorBoard, MLflow), notata is built for scientific workflows such as simulations, solvers, and numerical experiments, where file-based logging matters more than dashboards.
 **No servers, no setup, no reinventing the wheel for each new project.**
 
 ## Installation
@@ -108,9 +108,39 @@ Each run creates a `log_<run_id>/` folder and appends a row to `index.csv` with 
 | falling\_ball\_dt\_0.01 | 0.01 | complete | 95.04595      | 9.81         |
 | falling\_ball\_dt\_0.5  | 0.5  | missing  |               |              |
 
+## Using ExperimentReader
+
+Since `notata` log dirs are somewhat verbose, we also provided a utility wrapper to load and read the data.
+This makes it more intuitive when you need to compare runs (e.g. in experiments), or you just don't want to deal with the files paths.
+For single runs you can directly use `notata.LogReader`.
+
+```python
+from notata import ExperimentReader
+import matplotlib.pyplot as plt
+
+# Load the experiment
+exp = ExperimentReader("outputs/oscillator_sweep")
+
+# Plot energy vs time for each run
+fig, ax = plt.subplots()
+for run in exp:
+    omega, dt = run.params['omega'], run.params['dt']
+    energy = run.load_array("energy")
+    label = f"omega={omega}, dt={dt}"
+    ax.plot(energy, label=label)
+ax.set(xlabel="Time step", ylabel="Energy", title="Energy vs Time")
+ax.legend()
+plt.show()
+
+# Print summary of runs
+for run in exp:
+    status = run.meta.get('status', 'unkown')
+    duration = run.meta.get('runtime_sec', 'unknown')
+    print(f"Run ID: {run.run_id}, {status=}, {duration=}")
+```
 
 ## Output format
-Data is stored as following:
+Data is stored as following in order to be intuitive to explore:
 ```bash
 log_<run_id>/
   log.txt
