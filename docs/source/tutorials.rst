@@ -4,7 +4,6 @@ Tutorials
 .. toctree::
    :maxdepth: 1
 
-   tutorials/quickstart
    tutorials/manual
    tutorials/sweeps
    tutorials/plotting
@@ -12,3 +11,4 @@ Tutorials
    tutorials/failures
    tutorials/shell_usage
    tutorials/experiment
+   tutorials/readers

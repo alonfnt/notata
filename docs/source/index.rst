@@ -67,6 +67,34 @@ Documentation
    tutorials
    api
 
+Quick Example
+-------------
+
+Here’s a quick example of how to use ``notata``:
+
+.. code-block:: python
+
+    from notata import Logbook, LogReader
+    import numpy as np
+
+    # Log a single run
+    with Logbook("oscillator", params={"omega": 2.0, "dt": 0.01}) as log:
+        x = np.linspace(0, 10, 100)
+        y = np.sin(2 * np.pi * x)
+        log.array("trajectory", y)
+        log.json("final_state", {"max_y": float(y.max())})
+
+    # Access the logged run
+    reader = LogReader("outputs/log_oscillator")
+    print("Run ID:", reader.run_id)
+    print("Metadata:", reader.meta)
+    print("Parameters:", reader.params)
+    trajectory = reader.load_array("trajectory")
+    print("Trajectory array:", trajectory)
+
+This demonstrates logging structured data and accessing it programmatically.
+
+
 Project Info
 ------------
 
