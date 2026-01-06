@@ -1,11 +1,34 @@
 # notata
 
-[![tests](https://github.com/alonfnt/notata/actions/workflows/pytest.yml/badge.svg)](https://github.com/alonfnt/notata/actions/workflows/pytest.yml)
-[![Docs](https://readthedocs.org/projects/notata/badge/?version=latest)](https://notata.readthedocs.io/en/latest/)
-[![PyPI](https://img.shields.io/pypi/v/notata.svg)](https://pypi.org/project/notata/)
+<p align="center"><em>Structured filesystem logging for scientific runs</em></p>
 
 <p align="center">
     <img style="width: 500px; height: auto;"  src="https://github.com/user-attachments/assets/0e73e7b8-bdee-4fcf-9872-fdf8b3d52156" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/alonfnt/notata/actions/workflows/pytest.yml">
+    <img src="https://github.com/alonfnt/notata/actions/workflows/pytest.yml/badge.svg" alt="Tests">
+  </a>
+  <a href="https://notata.readthedocs.io/en/latest/">
+    <img src="https://readthedocs.org/projects/notata/badge/?version=latest" alt="Docs">
+  </a>
+  <a href="https://pypi.org/project/notata/">
+    <img src="https://img.shields.io/pypi/v/notata.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/notata/">
+    <img src="https://img.shields.io/pypi/pyversions/notata.svg" alt="Python Version">
+  </a>
+  <img src="https://img.shields.io/badge/platform-linux--64%20%7C%20win--64%20%7C%20osx--64-lightgrey" alt="Platform">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  </a>
+  <a href="https://pepy.tech/project/notata">
+    <img src="https://pepy.tech/badge/notata" alt="Downloads">
+  </a>
+  <a href="https://codecov.io/gh/alonfnt/notata">
+    <img src="https://codecov.io/gh/alonfnt/notata/graph/badge.svg" alt="codecov">
+  </a>
 </p>
 
 `notata` is a minimal library for **structured filesystem logging of scientific runs**.
