@@ -1,3 +1,4 @@
+import builtins
 import json
 import pickle
 import re
@@ -128,6 +129,23 @@ def test_save_arrays_multiple_keys(tmp_path: Path):
     assert np.array_equal(z["b"], b)
 
 
+def test_target_dir_uses_fallback_when_category_none(tmp_path: Path):
+    log = Logbook("target_fallback", base_dir=tmp_path)
+    fallback = log.path / "custom"
+    fallback.mkdir()
+    path = log._target_dir(None, fallback)
+    assert path == fallback
+    assert (log.path / "custom").exists()
+
+
+def test_target_dir_creates_category_directory(tmp_path: Path):
+    log = Logbook("target_category", base_dir=tmp_path)
+    fallback = log.datadir
+    category_path = log._target_dir("extras", fallback)
+    assert category_path == log.path / "extras"
+    assert category_path.exists()
+
+
 # ---------- Plot Saving ----------
 
 def test_save_plot_png_and_pdf(tmp_path: Path):
@@ -138,6 +156,22 @@ def test_save_plot_png_and_pdf(tmp_path: Path):
     log.plot("line", formats=("png", "pdf"))
     assert (log.plotdir / "line.png").is_file()
     assert (log.plotdir / "line.pdf").is_file()
+
+
+def test_plot_raises_when_matplotlib_missing(tmp_path: Path, monkeypatch):
+    log = Logbook("no_mpl", base_dir=tmp_path)
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name.startswith("matplotlib"):
+            raise ImportError("no mpl")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError):
+        log.plot("line")
 
 
 # ---------- Generic Artifact Saving ----------
