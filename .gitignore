@@ -7,3 +7,5 @@ outputs/
 test_outputs/
 docs/build/
 *.egg-info/
+.vscode/
+.coverage
