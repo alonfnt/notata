@@ -1,0 +1,26 @@
+codecov:
+  require_ci_to_pass: yes
+  precision: 2
+  round: down
+  layout: "reach,diff,flags,tree"
+  behavior: default
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+ignore:
+  - "tests"
+  - "docs"
+
+flags:
+  unittests:
+    paths:
+      - notata
+    carryforward: true
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
