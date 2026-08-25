@@ -46,3 +46,6 @@ autodoc_default_options = {
 html_theme = 'sphinx_book_theme'
 html_static_path = ["_static"]
 html_logo = "_static/notata.png"
+
+# Served verbatim at the docs root, see https://llmstxt.org
+html_extra_path = ["../llms.txt"]

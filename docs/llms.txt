@@ -1,0 +1,52 @@
+# notata
+
+> Minimal Python library for structured filesystem logging of scientific runs.
+> Each run becomes a directory of plain files — parameters, arrays, plots,
+> artifacts, metadata and a timestamped log. No server, no database, no
+> dashboard. Built for simulations, solvers and parameter sweeps rather than
+> machine-learning experiment tracking.
+
+Install with `pip install notata`. Requires Python 3.10+; depends only on
+numpy and pyyaml. matplotlib and pandas are optional, used by `Logbook.plot`
+and `Experiment.to_dataframe` respectively.
+
+Four public names, all importable from the top-level package:
+
+- `Logbook` — writes one run directory. Context manager marks the run
+  `complete` on clean exit, or `failed` with the exception message.
+- `Experiment` — parameter sweeps; one run directory per parameter
+  combination plus an `index.csv` summary.
+- `LogReader` — reads one run directory back.
+- `ExperimentReader` — iterates the runs of an experiment.
+
+A run directory is laid out as:
+
+```
+log_<run_id>/
+  log.txt            [YYYY-MM-DDTHH:MM:SS] LEVEL message
+  metadata.json      status, start_time, end_time, runtime_sec, failure_reason
+  params.yaml        parameter snapshot (params.json if ext="json")
+  data/              .npy from array(), .npz from arrays()
+  plots/             figures from plot()
+  artifacts/         .json, .txt, .pkl, raw bytes
+```
+
+## Docs
+
+- [Quickstart](https://notata.readthedocs.io/en/latest/tutorials/quickstart.html): first run, in full
+- [Directory structure](https://notata.readthedocs.io/en/latest/structure.html): what each file holds and its format
+- [Naming conventions](https://notata.readthedocs.io/en/latest/naming.html): run ids and artifact names
+- [API reference](https://notata.readthedocs.io/en/latest/api.html): every method, with signatures
+- [Experiment sweeps](https://notata.readthedocs.io/en/latest/tutorials/experiment.html): multi-run logging and `index.csv`
+- [Reading runs back](https://notata.readthedocs.io/en/latest/tutorials/readers.html): LogReader and ExperimentReader
+- [Artifacts](https://notata.readthedocs.io/en/latest/tutorials/artifacts.html): json, text, pickle and raw bytes
+- [Plotting](https://notata.readthedocs.io/en/latest/tutorials/plotting.html): saving matplotlib figures
+- [Failure handling](https://notata.readthedocs.io/en/latest/tutorials/failures.html): how failed runs are recorded
+- [Shell usage](https://notata.readthedocs.io/en/latest/tutorials/shell_usage.html): inspecting runs with grep, cat and friends
+
+## Optional
+
+- [Source](https://github.com/alonfnt/notata): the library is under 900 lines
+- [PyPI](https://pypi.org/project/notata/): release history
+- [Manual lifecycle](https://notata.readthedocs.io/en/latest/tutorials/manual.html): using Logbook without a context manager
+- [Manual parameter sweeps](https://notata.readthedocs.io/en/latest/tutorials/sweeps.html): sweeping with Logbook directly, without Experiment
