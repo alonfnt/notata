@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "notata: Structured Filesystem Logging for Scientific Runs"
+abstract: >-
+  A minimal Python library for structured filesystem logging of scientific
+  runs. Each run becomes a self-contained directory holding its parameters,
+  arrays, plots, artifacts, metadata and a timestamped log, written as plain
+  files with no server, database or dashboard involved.
+type: software
+authors:
+  - family-names: Alonso
+    given-names: Albert
+    affiliation: "Aalborg University"
+repository-code: "https://github.com/alonfnt/notata"
+url: "https://notata.readthedocs.io"
+license: MIT
+version: 0.2.1
+keywords:
+  - logging
+  - experiment tracking
+  - reproducibility
+  - scientific computing
+  - simulation
