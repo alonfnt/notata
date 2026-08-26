@@ -14,6 +14,7 @@ authors:
 repository-code: "https://github.com/alonfnt/notata"
 url: "https://notata.readthedocs.io"
 license: MIT
+doi: "10.5281/zenodo.22108081"
 version: 0.3.0
 date-released: 2026-08-26
 keywords:

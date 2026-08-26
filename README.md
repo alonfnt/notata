@@ -29,6 +29,9 @@
   <a href="https://codecov.io/gh/alonfnt/notata">
     <img src="https://codecov.io/gh/alonfnt/notata/graph/badge.svg" alt="codecov">
   </a>
+  <a href="https://doi.org/10.5281/zenodo.22108081">
+    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22108081.svg" alt="DOI">
+  </a>
 </p>
 
 `notata` is a minimal library for **structured filesystem logging of scientific runs**.
@@ -263,8 +266,9 @@ You don't have to, but if you use `notata` in your research and need to referenc
   author  = {Albert Alonso},
   title   = {notata: Structured Filesystem Logging for Scientific Runs},
   url     = {https://github.com/alonfnt/notata},
+  doi     = {10.5281/zenodo.22108081},
   version = {0.3.0},
-  year    = {2025}
+  year    = {2026}
 }
 ```
 
