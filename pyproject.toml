@@ -1,13 +1,23 @@
 [project]
 name = "notata"
 dynamic = ["version"]
-description = "Structured scientific logging using Logbook"
+description = "Structured filesystem logging for scientific runs: parameters, arrays, plots and metadata in plain files"
 authors = [
     {name = "Albert Alonso", email = "alonfnt@pm.me"},
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
+keywords = [
+    "logging",
+    "experiment-tracking",
+    "reproducibility",
+    "scientific-computing",
+    "simulation",
+    "parameter-sweep",
+    "provenance",
+    "research-data-management",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -18,6 +28,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
+    "Topic :: System :: Logging",
+    "Typing :: Typed",
 ]
 dependencies = [
   "numpy",
@@ -31,6 +43,9 @@ version = {attr = "notata.__version__"}
 where = ["."]
 include = ["notata*"]
 
+[tool.setuptools.package-data]
+notata = ["py.typed"]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -42,3 +57,9 @@ dev = [
   "pytest",
   "pytest-cov"
 ]
+
+[project.urls]
+Homepage = "https://github.com/alonfnt/notata"
+Documentation = "https://notata.readthedocs.io"
+Repository = "https://github.com/alonfnt/notata"
+Issues = "https://github.com/alonfnt/notata/issues"

@@ -1,0 +1,36 @@
+{
+  "title": "notata: Structured Filesystem Logging for Scientific Runs",
+  "description": "<p>notata is a minimal Python library for structured filesystem logging of scientific runs. Each run becomes a self-contained directory holding its parameters, arrays, plots, artifacts, metadata and a timestamped log, written as plain files with no server, database or dashboard involved. It targets simulations, numerical solvers and parameter sweeps, where reproducibility and direct filesystem access matter more than interactive tracking UIs.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Alonso, Albert",
+      "affiliation": "Aalborg University"
+    }
+  ],
+  "keywords": [
+    "logging",
+    "experiment tracking",
+    "reproducibility",
+    "scientific computing",
+    "simulation",
+    "parameter sweep",
+    "provenance",
+    "research data management",
+    "Python"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/alonfnt/notata",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://notata.readthedocs.io",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    }
+  ]
+}

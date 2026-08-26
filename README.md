@@ -162,6 +162,68 @@ for run in exp:
     print(f"Run ID: {run.run_id}, {status=}, {duration=}")
 ```
 
+<details>
+<summary><b>API quick reference</b></summary>
+
+Four public names, all importable from `notata`. Everything below writes into
+the run directory shown under [Output format](#output-format).
+
+```python
+from notata import Logbook, Experiment, LogReader, ExperimentReader
+
+# --- writing a run ---------------------------------------------------------
+log = Logbook(run_id, base_dir="outputs", params=None,
+              overwrite=False, preallocate=False, callback=None)
+
+log.params(ext="yaml", **kwargs)        # params.yaml (or params.json)
+log.meta(**fields)                      # merge fields into metadata.json
+log.array("energy", arr)                # data/energy.npy
+log.arrays("state", x=x, v=v)           # data/state.npz  (compressed=True)
+log.json("metrics", {"error": 1e-6})    # artifacts/metrics.json
+log.text("stdout", "...")               # artifacts/stdout.txt
+log.pickle("model", obj)                # artifacts/model.pkl
+log.bytes("weights.bin", b"...")        # artifacts/weights.bin
+log.plot("energy", fig=None, dpi=200, formats=("png",))   # plots/energy.png
+log["artifacts/custom.dat"]             # Path inside the run, parents created
+
+log.info(msg); log.warning(msg); log.error(msg); log.debug(msg)
+log.elapsed                             # seconds since init
+log.status                              # initialized | complete | failed
+log.mark_complete(); log.mark_failed(reason)
+
+# As a context manager: complete on clean exit, failed if an exception escapes.
+with Logbook("run1", params={"dt": 1e-3}) as log:
+    ...
+
+# --- sweeping --------------------------------------------------------------
+exp = Experiment("sweep", base_dir="outputs")
+log = exp.add(skip_existing=False, **params)   # None if skipped
+exp.to_dataframe()                             # pandas view of index.csv
+exp.select(dt=0.01)                            # filtered rows
+
+# --- reading back ----------------------------------------------------------
+run = LogReader("outputs/log_run1")
+run.run_id, run.params, run.meta               # dicts straight from disk
+run.arrays                                     # ["energy", "state:x", ...]
+run.artifacts                                  # names of artifacts/*.json
+run.plots                                      # filenames under plots/
+run.load_array("energy")                       # data/energy.npy
+run.load_array("state:x")                      # key "x" inside state.npz
+run.load_json("metrics")                       # artifacts/metrics.json
+
+exp = ExperimentReader("outputs/sweep")
+len(exp); exp["run_id"]; exp.params; exp.meta
+for run in exp:                                # each item is a LogReader
+    ...
+```
+
+Notes worth knowing: `Logbook` refuses to clobber an existing run directory
+unless `overwrite=True`; `plot` needs matplotlib and `to_dataframe` needs
+pandas, both optional; and methods are not thread- or process-safe, so
+coordinate externally when logging from multiple workers.
+
+</details>
+
 ## Output format
 Data is stored as following in order to be intuitive to explore:
 ```bash
@@ -201,7 +263,7 @@ You don't have to, but if you use `notata` in your research and need to referenc
   author  = {Albert Alonso},
   title   = {notata: Structured Filesystem Logging for Scientific Runs},
   url     = {https://github.com/alonfnt/notata},
-  version = {0.2.0},
+  version = {0.2.1},
   year    = {2025}
 }
 ```

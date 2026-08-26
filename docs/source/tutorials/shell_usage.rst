@@ -137,5 +137,5 @@ Tips
 Next Steps
 ----------
 
-- For naming patterns that support scripting: see :doc:`naming`
+- For naming patterns that support scripting: see :doc:`/naming`
 - For sweep setup and failure recovery: see :doc:`sweeps`

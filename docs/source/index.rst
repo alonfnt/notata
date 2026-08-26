@@ -112,7 +112,7 @@ If you use ``notata`` in your research or publications, please consider citing i
       author  = {Albert Alonso},
       title   = {notata: Structured Filesystem Logging for Scientific Runs},
       url     = {https://github.com/alonfnt/notata},
-      version = {0.1.0},
+      version = {0.2.1},
       year    = {2025}
     }
 
