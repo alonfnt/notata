@@ -112,8 +112,9 @@ If you use ``notata`` in your research or publications, please consider citing i
       author  = {Albert Alonso},
       title   = {notata: Structured Filesystem Logging for Scientific Runs},
       url     = {https://github.com/alonfnt/notata},
+      doi     = {10.5281/zenodo.22108081},
       version = {0.3.0},
-      year    = {2025}
+      year    = {2026}
     }
 
 License
