@@ -205,11 +205,11 @@ exp.select(dt=0.01)                            # filtered rows
 run = LogReader("outputs/log_run1")
 run.run_id, run.params, run.meta               # dicts straight from disk
 run.arrays                                     # ["energy", "state:x", ...]
-run.artifacts                                  # names of artifacts/*.json
+run.artifacts                                  # ["metrics.json", "nested/config.json", ...]
 run.plots                                      # filenames under plots/
 run.load_array("energy")                       # data/energy.npy
 run.load_array("state:x")                      # key "x" inside state.npz
-run.load_json("metrics")                       # artifacts/metrics.json
+run.load_json("metrics")                       # artifacts/metrics.json (.json optional)
 
 exp = ExperimentReader("outputs/sweep")
 len(exp); exp["run_id"]; exp.params; exp.meta

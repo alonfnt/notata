@@ -96,10 +96,18 @@ class LogReader:
 
     @property
     def artifacts(self) -> List[str]:
+        """Names of every file under ``artifacts/``, relative to it.
+
+        Names keep their extension, since artifacts of different types may
+        share a stem, and nested categories appear as ``category/name.ext``.
+        """
         artifacts_path = self.path / "artifacts"
         if not artifacts_path.exists():
             return []
-        return sorted(f.stem for f in artifacts_path.glob("*.json"))
+        return sorted(
+            f.relative_to(artifacts_path).as_posix()
+            for f in artifacts_path.rglob("*") if f.is_file()
+        )
 
     @property
     def plots(self) -> List[str]:
@@ -137,7 +145,8 @@ class LogReader:
             return np.load(path)
 
     def load_json(self, name: str) -> Dict[str, Any]:
-        return self._read_json(f"artifacts/{name}.json")
+        """Load a JSON artifact. The ``.json`` suffix is optional."""
+        return self._read_json(f"artifacts/{name.removesuffix('.json')}.json")
 
     def _read_json(self, relpath: str) -> Dict[str, Any]:
         full = self.path / relpath

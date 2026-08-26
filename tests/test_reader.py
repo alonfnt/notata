@@ -171,13 +171,46 @@ def test_logreader_artifacts_loading(temp_dir):
 
     reader = LogReader(log_dir)
     names = reader.artifacts
-    assert "metrics" in names
-    assert "config" in names
+    assert "metrics.json" in names
+    assert "config.json" in names
 
     metrics = reader.load_json("metrics")
-    config = reader.load_json("config")
+    config = reader.load_json("config.json")
     assert metrics["acc"] == 0.91
     assert config["omega"] == 2.0
+
+
+def test_logreader_artifacts_lists_every_type(temp_dir):
+    log_dir = temp_dir / "log_all_artifacts"
+    log_dir.mkdir()
+    (log_dir / "metadata.json").write_text(json.dumps({"status": "initialized"}))
+    artifacts_dir = log_dir / "artifacts"
+    (artifacts_dir / "nested").mkdir(parents=True)
+    (artifacts_dir / "metrics.json").write_text(json.dumps({"acc": 0.91}))
+    (artifacts_dir / "stdout.txt").write_text("done")
+    (artifacts_dir / "model.pkl").write_bytes(b"\x80\x05")
+    (artifacts_dir / "weights.bin").write_bytes(b"\x00\x01")
+    (artifacts_dir / "nested" / "config.json").write_text(json.dumps({"dt": 1e-3}))
+
+    assert LogReader(log_dir).artifacts == [
+        "metrics.json",
+        "model.pkl",
+        "nested/config.json",
+        "stdout.txt",
+        "weights.bin",
+    ]
+
+
+def test_logreader_artifacts_distinguishes_shared_stems(temp_dir):
+    log_dir = temp_dir / "log_shared_stems"
+    log_dir.mkdir()
+    (log_dir / "metadata.json").write_text(json.dumps({"status": "initialized"}))
+    artifacts_dir = log_dir / "artifacts"
+    artifacts_dir.mkdir()
+    (artifacts_dir / "report.json").write_text(json.dumps({"n": 1}))
+    (artifacts_dir / "report.txt").write_text("same stem, different file")
+
+    assert LogReader(log_dir).artifacts == ["report.json", "report.txt"]
 
 
 def test_logreader_artifacts_missing_returns_empty(temp_dir):
