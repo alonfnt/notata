@@ -14,7 +14,8 @@ authors:
 repository-code: "https://github.com/alonfnt/notata"
 url: "https://notata.readthedocs.io"
 license: MIT
-version: 0.2.1
+version: 0.3.0
+date-released: 2026-08-26
 keywords:
   - logging
   - experiment tracking

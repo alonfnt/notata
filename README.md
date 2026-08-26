@@ -263,7 +263,7 @@ You don't have to, but if you use `notata` in your research and need to referenc
   author  = {Albert Alonso},
   title   = {notata: Structured Filesystem Logging for Scientific Runs},
   url     = {https://github.com/alonfnt/notata},
-  version = {0.2.1},
+  version = {0.3.0},
   year    = {2025}
 }
 ```
